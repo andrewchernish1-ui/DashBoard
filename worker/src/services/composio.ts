@@ -150,6 +150,11 @@ export async function fetchExerciseSheetData(env: Bindings): Promise<SheetExerci
 		.map((row) => {
 			const [name, weightStr, dateRaw] = row;
 			const weight = parseFloat(weightStr ?? '');
+			const nameNormalized = (name ?? '').toString().trim().toLowerCase();
+			const weightNormalized = (weightStr ?? '').toString().trim().toLowerCase();
+			if (nameNormalized === 'упражнение' && (weightNormalized.includes('вес') || weightNormalized.includes('кг'))) {
+				return null;
+			}
 			if (!name || Number.isNaN(weight)) {
 				return null;
 			}
@@ -181,6 +186,15 @@ export async function fetchPaymentSheetData(env: Bindings): Promise<SheetPayment
 				lastNotifiedAt,
 				errorMessage,
 			] = row;
+			const nameNormalized = (name ?? '').toString().trim().toLowerCase();
+			const amountNormalized = (amountStr ?? '').toString().trim().toLowerCase();
+			const nextPaymentNormalized = (nextPayment ?? '').toString().trim().toLowerCase();
+			if (
+				nameNormalized === 'клиент' &&
+				(amountNormalized.includes('сумм') || nextPaymentNormalized.includes('следующая'))
+			) {
+				return null;
+			}
 			const amount = parseFloat((amountStr ?? '').toString().replace(/\s/g, '').replace(',', '.'));
 			const chatId = telegramChatId ? String(telegramChatId).trim() : null;
 			const optInValue = String(notifyOptIn ?? '').trim().toLowerCase();
