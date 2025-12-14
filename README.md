@@ -36,6 +36,7 @@ Worker читает диапазоны из секретов:
 - Базовые: `COMPOSIO_API_KEY`, `COMPOSIO_CONNECTION_ID`, `COMPOSIO_USER_ID`, `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE`, `PAYMENTS_SHEET_RANGE`, `API_SECRET` (необязателен, но желателен).
 - Календарь: `GOOGLE_CALENDAR_ID`, `COMPOSIO_CALENDAR_CONNECTION_ID`, `COMPOSIO_CALENDAR_USER_ID`, `COMPOSIO_CALENDAR_AUTH_CONFIG_ID` (если требуется).
 - Напоминания в Telegram: `TELEGRAM_BOT_TOKEN`, `TIMEZONE_DEFAULT`, `REMINDER_DEDUP_MINUTES`, `REMINDER_STATUSES_SKIP`, `REMINDER_TEMPLATE` (опц.).
+- Кнопка “Оплатил”: `REMINDER_CONFIRM_BASE_URL` (публичный URL воркера) и `REMINDER_CONFIRM_SECRET` (рандомная строка для подписи ссылок).
 
 ## Флоу обновления
 1. Вносим данные в Google Sheet.
@@ -74,4 +75,11 @@ Worker читает диапазоны из секретов:
 - Notify opt-in (I): `yes`/`no`. Если `no`, уведомления пропускаются.
 - Таймзона (J): например `Europe/Moscow`; если пусто - берём `TIMEZONE_DEFAULT`.
 - Служебные поля `K/L/M` руками не заполняем - их пишет воркер после отправки/ошибок.
+- В каждом напоминании есть кнопка “Оплатил”. Клиент нажимает → открывается страница воркера, где отметка записывается в `reminders_log`. Дату в таблице всё равно меняем вручную.
 
+## Полезные эндпоинты
+- `POST /api/reminders/run` — ручной запуск напоминаний (нужен `X-API-KEY`, если включён `API_SECRET`).
+- `GET /api/reminders/logs?limit=20` — последние записи из `reminders_log`.
+- `GET /api/telegram/updates?limit=20` — посмотреть необработанные апдейты и узнать `chat.id`.
+- `GET /api/telegram/me` — проверить токен бота.
+- `GET /api/reminders/confirm?...` — ссылка из кнопки “Оплатил” (генерится автоматически).

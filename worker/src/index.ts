@@ -18,7 +18,7 @@ import type { TelegramPost } from './services/telegram';
 import { normalizeDateInput, normalizePaymentStatus } from './services/payment-utils';
 import { todayISO } from './utils/date-utils';
 import { fetchCalendarEvents, fetchCalendarEventsRaw, fetchCalendarList } from './services/composio';
-import { ensureRemindersLogTable, sendReminders } from './services/reminders';
+import { ensureRemindersLogTable, logReminder, sendReminders, verifyConfirmationSignature } from './services/reminders';
 
 const app = new Hono<{ Bindings: Bindings }>();
 app.use('/*', cors());
@@ -906,6 +906,80 @@ app.get('/api/debug/calendars', async (c) => {
 		console.error('Debug calendars failed', error);
 		const message = (error as Error).message;
 		return c.json({ error: message }, 500);
+	}
+});
+
+app.get('/api/reminders/confirm', async (c) => {
+	try {
+		const secret = c.env.REMINDER_CONFIRM_SECRET;
+		if (!secret) {
+			return new Response('Подтверждение не настроено', { status: 500 });
+		}
+		const url = new URL(c.req.url);
+		const rowParam = url.searchParams.get('row');
+		const due = url.searchParams.get('due');
+		const chat = url.searchParams.get('chat');
+		const sig = url.searchParams.get('sig');
+		const rowNumber = rowParam ? Number(rowParam) : NaN;
+		if (!Number.isFinite(rowNumber) || !due || !chat || !sig) {
+			return new Response('Некорректная ссылка', { status: 400 });
+		}
+
+		const isValid = await verifyConfirmationSignature(secret, rowNumber, due, chat, sig);
+		if (!isValid) {
+			return new Response('Ссылка устарела или недействительна', { status: 400 });
+		}
+
+		const payments = await fetchPaymentSheetData(c.env);
+		const payment = payments.find((p) => p.rowNumber === rowNumber);
+		if (!payment) {
+			return new Response('Клиент не найден', { status: 404 });
+		}
+		if ((payment.telegramChatId ?? '').toString() !== chat) {
+			return new Response('Ссылка устарела', { status: 400 });
+		}
+
+		const nowIso = new Date().toISOString();
+		await ensureRemindersLogTable(c.env.DB);
+		await logReminder(c.env.DB, {
+			client: payment.name,
+			chatId: chat,
+			dueAt: due,
+			sentAt: nowIso,
+			offset: null,
+			status: 'confirmed',
+		});
+
+		const html = `<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Спасибо!</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:#0f172a;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:2rem;}
+.card{background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(15,23,42,0.08);padding:32px;max-width:420px;text-align:center;}
+.card h1{font-size:1.4rem;margin-bottom:0.5rem;}
+.card p{margin:0.3rem 0;color:#475569;}
+.card a{color:#059669;text-decoration:none;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Спасибо!</h1>
+  <p>Мы получили отметку об оплате.</p>
+  <p>Дата в таблице обновляется вручную, всё под контролем.</p>
+  <p><a href="tg://user?id=${encodeURIComponent(chat)}">Вернуться в Telegram</a></p>
+</div>
+</body>
+</html>`;
+		return new Response(html, {
+			headers: {
+				'content-type': 'text/html; charset=utf-8',
+			},
+		});
+	} catch (error) {
+		console.error('Reminders confirm failed', error);
+		return new Response('Произошла ошибка, попробуйте позже', { status: 500 });
 	}
 });
 

@@ -16,6 +16,8 @@ export type Bindings = {
 	REMINDER_DEDUP_MINUTES?: string;
 	REMINDER_STATUSES_SKIP?: string;
 	REMINDER_TEMPLATE?: string;
+	REMINDER_CONFIRM_BASE_URL?: string;
+	REMINDER_CONFIRM_SECRET?: string;
 };
 
 export type ExerciseRow = {

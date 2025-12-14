@@ -18,6 +18,8 @@
 | Dedup minutes | `wrangler secret put` | `REMINDER_DEDUP_MINUTES` | Интервал дедупликации отправок (мин.) |
 | Skip statuses | `wrangler secret put` | `REMINDER_STATUSES_SKIP` | Список статусов, при которых не слать (`paid,cancelled`) |
 | Reminder template | `wrangler secret put` | `REMINDER_TEMPLATE` | Шаблон текста, опционально |
+| Подтверждение оплаты — base URL | `wrangler secret put` | `REMINDER_CONFIRM_BASE_URL` | Публичный URL воркера (например, `https://dashboard-backend...workers.dev`) |
+| Подтверждение оплаты — secret | `wrangler secret put` | `REMINDER_CONFIRM_SECRET` | Любая случайная строка, используется для подписи ссылки |
 | API secret для маршрутов | `wrangler secret put` | `API_SECRET` | Любое значение. При наличии проверяется в заголовке `X-API-KEY` |
 
 Для локальной разработки продублируй значения в `worker/.dev.vars`.

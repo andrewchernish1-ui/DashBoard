@@ -2,6 +2,8 @@ import { fetchPaymentSheetData, updatePaymentRow, type SheetPayment } from './co
 import type { Bindings } from '../types';
 import { normalizeDateInput } from './payment-utils';
 
+const encoder = new TextEncoder();
+
 const dayMs = 86_400_000;
 
 const defaultTemplate =
@@ -81,7 +83,61 @@ const buildDaysLeft = (dueKey: string, nowKey: string): number | null => {
 	return dueNumber - nowNumber;
 };
 
-const sendTelegramMessage = async (token: string, chatId: string, text: string) => {
+const toHex = (buffer: ArrayBuffer): string => {
+	const byteArray = new Uint8Array(buffer);
+	return Array.from(byteArray)
+		.map((value) => value.toString(16).padStart(2, '0'))
+		.join('');
+};
+
+export async function generateConfirmationSignature(
+	secret: string,
+	rowNumber: number,
+	dueKey: string,
+	chatId: string
+): Promise<string> {
+	const payload = `${secret}|${rowNumber}|${dueKey}|${chatId}`;
+	const digest = await crypto.subtle.digest('SHA-256', encoder.encode(payload));
+	return toHex(digest);
+}
+
+async function buildConfirmationUrl(env: Bindings, payment: SheetPayment, dueKey: string): Promise<string | null> {
+	if (!env.REMINDER_CONFIRM_BASE_URL || !env.REMINDER_CONFIRM_SECRET || !payment.rowNumber || !payment.telegramChatId) {
+		return null;
+	}
+
+	const signature = await generateConfirmationSignature(
+		env.REMINDER_CONFIRM_SECRET,
+		payment.rowNumber,
+		dueKey,
+		payment.telegramChatId
+	);
+
+	const url = new URL('/api/reminders/confirm', env.REMINDER_CONFIRM_BASE_URL);
+	url.searchParams.set('row', String(payment.rowNumber));
+	url.searchParams.set('due', dueKey);
+	url.searchParams.set('chat', payment.telegramChatId);
+	url.searchParams.set('sig', signature);
+	return url.toString();
+}
+
+export async function verifyConfirmationSignature(
+	secret: string,
+	rowNumber: number,
+	dueKey: string,
+	chatId: string,
+	signature: string
+): Promise<boolean> {
+	const expected = await generateConfirmationSignature(secret, rowNumber, dueKey, chatId);
+	return expected === signature;
+}
+
+const sendTelegramMessage = async (
+	token: string,
+	chatId: string,
+	text: string,
+	replyMarkup?: Record<string, unknown>
+) => {
 	const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
@@ -90,6 +146,7 @@ const sendTelegramMessage = async (token: string, chatId: string, text: string) 
 			text,
 			parse_mode: 'HTML',
 			disable_web_page_preview: true,
+			...(replyMarkup ? { reply_markup: replyMarkup } : {}),
 		}),
 	});
 
@@ -116,9 +173,17 @@ export async function ensureRemindersLogTable(db: D1Database) {
 		.run();
 }
 
-async function logReminder(
+export async function logReminder(
 	db: D1Database,
-	entry: { client: string; chatId: string; dueAt: string | null; sentAt: string; offset: number; status: string; error?: string | null }
+	entry: {
+		client: string;
+		chatId: string;
+		dueAt: string | null;
+		sentAt: string;
+		offset: number | null;
+		status: string;
+		error?: string | null;
+	}
 ) {
 	await db
 		.prepare(
@@ -213,7 +278,10 @@ export async function sendReminders(env: Bindings): Promise<ReminderRunResult> {
 		const nowIso = new Date().toISOString();
 
 		try {
-			await sendTelegramMessage(token, payment.telegramChatId, message);
+			const confirmUrl = await buildConfirmationUrl(env, payment, dueKey);
+			await sendTelegramMessage(token, payment.telegramChatId, message, confirmUrl ? {
+				inline_keyboard: [[{ text: 'Оплатил ✅', url: confirmUrl }]],
+			} : undefined);
 			const updated: SheetPayment = {
 				...payment,
 				lastNotifiedOffset: daysLeft,
@@ -263,4 +331,5 @@ export const __test = {
 	dayNumberFromKey,
 	buildDaysLeft,
 	isDeduped,
+	generateConfirmationSignature,
 };
