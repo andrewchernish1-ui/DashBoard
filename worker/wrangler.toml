@@ -1,0 +1,12 @@
+name = "dashboard-backend"
+main = "src/index.ts"
+compatibility_date = "2024-04-05"
+account_id = "4e45c261b2f3bf0306f510a10fc0661e"
+
+[triggers]
+crons = ["0 6 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dashboard-db"
+database_id = "e894c536-95b2-4ed7-94c5-7b6302597b4c"

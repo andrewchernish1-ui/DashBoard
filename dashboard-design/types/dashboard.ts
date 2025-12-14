@@ -92,11 +92,17 @@ export type EventsData = {
   items: CalendarEvent[]
 }
 
+export type RemindersSummary = {
+  sent24h: number
+  errors24h: number
+}
+
 export type DashboardResponse = {
   telegram: TelegramData
   exercises: ExerciseData
   payments: PaymentData
   events?: EventsData
+  reminders?: RemindersSummary
 }
 
 export type RefreshResponse = {

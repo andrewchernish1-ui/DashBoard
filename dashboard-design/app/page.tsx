@@ -98,7 +98,7 @@ export default function Dashboard() {
               <TelegramMetrics data={data?.telegram} loading={isPriming} />
             </section>
             <section id="payments">
-              <PaymentTracking data={data?.payments} loading={isPriming} onChange={reload} />
+              <PaymentTracking data={data?.payments} reminders={data?.reminders} loading={isPriming} onChange={reload} />
             </section>
             <section id="events">
               <Events data={data?.events} />

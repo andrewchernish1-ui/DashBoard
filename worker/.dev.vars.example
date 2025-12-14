@@ -1,0 +1,18 @@
+COMPOSIO_API_KEY="your-composio-api-key"
+COMPOSIO_CONNECTION_ID="your-composio-connection-id"
+GOOGLE_SHEET_ID="your-google-sheet-id"
+COMPOSIO_USER_ID="your-user-id-from-connection"
+GOOGLE_SHEET_RANGE="Лист1!A2:C1000"
+PAYMENTS_SHEET_RANGE="Лист2!A2:M1000"
+GOOGLE_CALENDAR_ID="primary"
+COMPOSIO_CALENDAR_CONNECTION_ID=""
+COMPOSIO_CALENDAR_USER_ID=""
+COMPOSIO_CALENDAR_AUTH_CONFIG_ID=""
+API_SECRET="change-me-for-prod"
+
+# Reminders / Telegram
+TELEGRAM_BOT_TOKEN=""
+TIMEZONE_DEFAULT="UTC"
+REMINDER_DEDUP_MINUTES="15"
+REMINDER_STATUSES_SKIP="paid,cancelled"
+REMINDER_TEMPLATE="Привет, {name}! Через {days_left} дн. истекает план {plan}. Сумма к оплате: {amount}. Дата: {next_payment}."

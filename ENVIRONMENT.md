@@ -12,7 +12,12 @@
 | Google Sheet ID | `wrangler secret put` | `GOOGLE_SHEET_ID` | ID таблицы (часть URL после `/d/`) |
 | Composio User ID | `wrangler secret put` | `COMPOSIO_USER_ID` | Тот `user_id`, который указал при создании connection (например `andrew-prod`) |
 | Sheet Range (RM) | `wrangler secret put` | `GOOGLE_SHEET_RANGE` | Диапазон вида `Лист1!A2:B50`, чтобы подстраиваться под русские названия листов |
-| Sheet Range (Payments) | `wrangler secret put` | `PAYMENTS_SHEET_RANGE` | Диапазон листа оплат, например `Лист2!A2:F100` |
+| Sheet Range (Payments) | `wrangler secret put` | `PAYMENTS_SHEET_RANGE` | Диапазон листа оплат, например `Лист2!A2:M1000` |
+| Telegram bot token | `wrangler secret put` | `TELEGRAM_BOT_TOKEN` | Токен бота для напоминаний |
+| Default timezone | `wrangler secret put` | `TIMEZONE_DEFAULT` | Таймзона по умолчанию (например `Europe/Moscow`) |
+| Dedup minutes | `wrangler secret put` | `REMINDER_DEDUP_MINUTES` | Интервал дедупликации отправок (мин.) |
+| Skip statuses | `wrangler secret put` | `REMINDER_STATUSES_SKIP` | Список статусов, при которых не слать (`paid,cancelled`) |
+| Reminder template | `wrangler secret put` | `REMINDER_TEMPLATE` | Шаблон текста, опционально |
 | API secret для маршрутов | `wrangler secret put` | `API_SECRET` | Любое значение. При наличии проверяется в заголовке `X-API-KEY` |
 
 Для локальной разработки продублируй значения в `worker/.dev.vars`.

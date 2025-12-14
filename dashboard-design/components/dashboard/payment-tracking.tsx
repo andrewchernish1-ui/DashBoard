@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertCircle, Clock, CheckCircle, CalendarDays, BellRing, Loader2, Pencil, Trash2 } from "lucide-react"
-import type { PaymentData, PaymentItem } from "@/types/dashboard"
+import type { PaymentData, PaymentItem, RemindersSummary } from "@/types/dashboard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { addPayment, deletePayment, updatePayment } from "@/lib/api"
 
 type PaymentTrackingProps = {
   data?: PaymentData
+  reminders?: RemindersSummary
   loading: boolean
   onChange?: () => void
 }
@@ -64,7 +65,7 @@ function getDaysUntil(dateString?: string | null) {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
-export function PaymentTracking({ data, loading, onChange }: PaymentTrackingProps) {
+export function PaymentTracking({ data, reminders, loading, onChange }: PaymentTrackingProps) {
   const [form, setForm] = useState({
     name: "",
     amount: "",
@@ -204,6 +205,8 @@ export function PaymentTracking({ data, loading, onChange }: PaymentTrackingProp
   const overdueAmount = summary?.overdueAmount ?? 0
   const nextSeven = summary?.nextSevenDays ?? 0
   const overduePercent = totalExpected > 0 ? Math.round((overdueAmount / totalExpected) * 100) : 0
+  const remindersSent = reminders?.sent24h ?? 0
+  const remindersErrors = reminders?.errors24h ?? 0
 
   return (
     <Card className="col-span-1">
@@ -214,6 +217,10 @@ export function PaymentTracking({ data, loading, onChange }: PaymentTrackingProp
           </div>
           Оплата онлайн-клиентов
         </CardTitle>
+        <p className="text-xs text-muted-foreground flex items-center gap-2 mt-2">
+          <BellRing className="h-4 w-4 text-emerald-600" />
+          Напоминания (24ч): отправлено {remindersSent}, ошибок {remindersErrors}
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <form className="space-y-2" onSubmit={handleSubmit}>
