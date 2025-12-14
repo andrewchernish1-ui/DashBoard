@@ -4,7 +4,7 @@ compatibility_date = "2024-04-05"
 account_id = "4e45c261b2f3bf0306f510a10fc0661e"
 
 [triggers]
-crons = ["0 6 * * *"]
+crons = ["0 9 * * *"]
 
 [[d1_databases]]
 binding = "DB"
